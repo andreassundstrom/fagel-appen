@@ -9,6 +9,7 @@ export default function Navbar (): ReactElement {
       <Toolbar>
         <Button color='inherit' component={ RouterLink } to="/">Hem</Button>
         <Button color='inherit' component={ RouterLink } to="/faglar">Fåglar</Button>
+        <Button color='inherit' component={ RouterLink } to="/fagellistan">Fågellistan</Button>
       </Toolbar>
     </AppBar>)
 }

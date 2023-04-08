@@ -1,3 +1,4 @@
+import FagelListan from './routes/fagel-listan'
 import Faglar from './routes/faglar'
 import Home from './routes/home'
 import Layout from './routes/layout'
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
       {
         path: 'faglar',
         element: <Faglar />
+      },
+      {
+        path: 'fagellistan',
+        element: <FagelListan />
       }
     ]
   }
