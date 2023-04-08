@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import { Button, FormControl, FormLabel, TextField, Typography } from '@mui/material'
+import { useAuth } from 'oidc-react'
 import { useState, type ReactElement, useEffect } from 'react'
 
 export default function FagelListan (): ReactElement {
   const [faglar, setFaglar] = useState<any[]>()
   const [error, setError] = useState()
   const [namn, setNamn] = useState('')
+  const auth = useAuth()
 
   function GetFaglar (): void {
     fetch('api/faglar')
@@ -15,21 +17,23 @@ export default function FagelListan (): ReactElement {
   }
 
   function SkapaNyFagel (): void {
-    console.log(`Skapar ny fågel: ${namn}`)
-    fetch('/api/faglar', {
-      method: 'POST',
-      body: JSON.stringify({
-        fagelNamn: namn
-      }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(res => {
-        setNamn('')
-        GetFaglar()
+    if (auth.userData?.id_token) {
+      fetch('/api/faglar', {
+        method: 'POST',
+        body: JSON.stringify({
+          fagelNamn: namn
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.userData.id_token}`
+        }
       })
-      .catch(err => { setError(err) })
+        .then(res => {
+          setNamn('')
+          GetFaglar()
+        })
+        .catch(err => { setError(err) })
+    }
   }
   useEffect(() => {
     GetFaglar()
@@ -41,10 +45,13 @@ export default function FagelListan (): ReactElement {
       <FormControl>
         <FormLabel>Ny fågel</FormLabel>
         <TextField value={namn} onChange={(e) => { setNamn(e.target.value) }} placeholder='Namn'></TextField>
-        <Button variant='contained' sx={{ marginTop: 1 }} onClick={SkapaNyFagel}>Skapa</Button>
+        <Button
+          variant='contained'
+          sx={{ marginTop: 1 }}
+          onClick={() => { SkapaNyFagel() }}>Skapa</Button>
       </FormControl>
       { faglar
-        ? <> { faglar.map((v, i) => <p key={i}>{v.fagelNamn}</p>)}</>
+        ? <> { faglar.map((v, i) => <p key={i}>{v.fagelNamn} /{v.skapadAv}</p>)}</>
         : <></>
       }
     </>

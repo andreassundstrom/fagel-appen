@@ -1,3 +1,5 @@
+using fagelappen.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 namespace Controllers;
@@ -15,9 +17,12 @@ public class FaglarController : ControllerBase{
   public ActionResult<IEnumerable<Fagel>> GetFaglar(){
     return _faglar.ToList();
   }
-
+  
+  [Authorize]
   [HttpPost]
-  public ActionResult CreateFagel(Fagel fagel){
+  public ActionResult CreateFagel(CreateFagelDto fagelDto){
+    Fagel fagel = new Fagel() { fagelNamn = fagelDto.fagelNamn, skapadAv = User.Identity.Name };
+
     if(_faglar.Any(p => p.fagelNamn.ToLower() == fagel.fagelNamn.ToLower())){
       return BadRequest($"Det finns redan en fågel med namnet {fagel.fagelNamn}");
     }
