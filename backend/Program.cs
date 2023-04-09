@@ -1,3 +1,4 @@
+using Fagelappen.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.IdentityModel.Tokens;
@@ -5,19 +6,27 @@ using Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
-builder.Services.AddSingleton<List<Fagel>>(p => new List<Fagel>());
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Audience = "bf3e82eb-219e-4d63-b4de-767e807d7886";
-        options.TokenValidationParameters.ValidIssuer = "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0";
-        
-        options.Authority = "https://login.microsoftonline.com/common/v2.0/";
-        //options.Authority = "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration";
+        options.Audience = builder.Configuration["Jwt:Audience"];
+        options.TokenValidationParameters.ValidIssuer = builder.Configuration["Jwt:Issuer"];
+        options.Authority = builder.Configuration["Jwt:Authority"];
     });
 builder.Services.AddAuthorization();
-
+builder.Services.AddNpgsql<FagelappenContext>(builder.Configuration.GetConnectionString("db"));
 var app = builder.Build();
+
+// Migrera databasen vid startup för dev
+if (app.Configuration.GetSection("Startup:MigrateDatabase").Get<bool>())
+{
+    using(var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<FagelappenContext>();
+        db.Database.EnsureCreated();
+    }
+}
+
 app.UseStaticFiles();
 app.UseSpa(options => { });
 

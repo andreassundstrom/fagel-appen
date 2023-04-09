@@ -1,4 +1,5 @@
 using fagelappen.Dto;
+using Fagelappen.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
@@ -7,28 +8,43 @@ namespace Controllers;
 [Route("api/faglar")]
 [ApiController]
 public class FaglarController : ControllerBase{
-  private readonly List<Fagel> _faglar;
+    private readonly FagelappenContext _db;
 
-  public FaglarController(List<Fagel> faglar){
-    _faglar = faglar;
+    public FaglarController(FagelappenContext db){
+        _db = db;
   }
 
   [HttpGet]
   public ActionResult<IEnumerable<Fagel>> GetFaglar(){
-    return _faglar.ToList();
+    return _db.Fagel.ToList();
   }
-  
-  [Authorize]
-  [HttpPost]
-  public ActionResult CreateFagel(CreateFagelDto fagelDto){
-    Fagel fagel = new Fagel() { fagelNamn = fagelDto.fagelNamn, skapadAv = User.Identity.Name };
 
-    if(_faglar.Any(p => p.fagelNamn.ToLower() == fagel.fagelNamn.ToLower())){
-      return BadRequest($"Det finns redan en fågel med namnet {fagel.fagelNamn}");
+    [HttpGet("ordningar")]
+    public ActionResult<IEnumerable<Ordning>> GetOrdningar()
+    {
+        return _db.Ordning.ToList();
     }
-    
-    _faglar.Add(fagel);
 
-    return Ok();
-  }
+    [Authorize]
+    [HttpPost]
+    public ActionResult CreateFagel(CreateFagelDto fagelDto){
+        if (User.Identity == null || User.Identity.Name == null)
+            throw new ArgumentNullException("Användarnamn saknas");
+
+        Fagel fagel = new Fagel() { 
+            FagelNamn = fagelDto.FagelNamn,
+            FagelLatin = fagelDto.FagelLatin ?? String.Empty,
+            OrdningId = fagelDto.OrdningId,
+            SkapadAv = User.Identity.Name,
+            Skapad = DateTime.UtcNow
+        };
+
+        if(_db.Fagel.Any(p => p.FagelNamn.ToLower() == fagel.FagelNamn.ToLower())){
+            return BadRequest($"Det finns redan en fågel med namnet {fagel.FagelNamn}");
+        }
+    
+        _db.Fagel.Add(fagel);
+        _db.SaveChanges();
+        return Ok();
+    }
 }
